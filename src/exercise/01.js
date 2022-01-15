@@ -65,6 +65,8 @@ function UserProvider({children}) {
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>
 }
 
+// Just an error trap so if you don't wrap within UserProvider, it errors.
+// Otherwise you could just useContext(UserContext) directly in UserSettings
 function useUser() {
   const context = React.useContext(UserContext)
   if (context === undefined) {
@@ -74,6 +76,16 @@ function useUser() {
 }
 
 // 🐨 add a function here called `updateUser`
+// 🐨 move the following logic to the `updateUser` function you create above
+function updateUser(dispatch, user, updates) {
+  dispatch({type: 'start update', updates: updates})
+
+  // userClient simulates a fake fetch request. Returns a promise.
+  userClient.updateUser(user, updates).then(
+    updatedUser => dispatch({type: 'finish update', updatedUser}),
+    error => dispatch({type: 'fail update', error}),
+  )
+}
 // Then go down to the `handleSubmit` from `UserSettings` and put that logic in
 // this function. It should accept: dispatch, user, and updates
 
@@ -89,6 +101,8 @@ function UserSettings() {
 
   const [formState, setFormState] = React.useState(user)
 
+  // Checks whether form has been modified.
+  // dequal compares nested keys to see if the overall object has same details.
   const isChanged = !dequal(user, formState)
 
   function handleChange(e) {
@@ -97,12 +111,14 @@ function UserSettings() {
 
   function handleSubmit(event) {
     event.preventDefault()
-    // 🐨 move the following logic to the `updateUser` function you create above
-    userDispatch({type: 'start update', updates: formState})
-    userClient.updateUser(user, formState).then(
-      updatedUser => userDispatch({type: 'finish update', updatedUser}),
-      error => userDispatch({type: 'fail update', error}),
-    )
+    updateUser(userDispatch, user, formState)
+    // // 🐨 move the following logic to the `updateUser` function you create above
+    // userDispatch({type: 'start update', updates: formState})
+    // // userClient simulates a fake fetch request. Returns a promise.
+    // userClient.updateUser(user, formState).then(
+    //   updatedUser => userDispatch({type: 'finish update', updatedUser}),
+    //   error => userDispatch({type: 'fail update', error}),
+    // )
   }
 
   return (
@@ -148,6 +164,7 @@ function UserSettings() {
         <button
           type="button"
           onClick={() => {
+            // Will reset the local state to whats in context (ignoring changes)
             setFormState(user)
             userDispatch({type: 'reset'})
           }}
