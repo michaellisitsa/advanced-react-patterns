@@ -12,8 +12,10 @@ function Toggle({children}) {
   // props.children to a clone of that child with the props they need using
   // React.cloneElement.
   return React.Children.map(children, (child, index) => {
-    if (typeof child.type !== 'string') {
-      React.cloneElement(child, {
+    if (typeof child.type === 'string') {
+      return child
+    } else {
+      return React.cloneElement(child, {
         on,
         onClick: toggle,
       })
